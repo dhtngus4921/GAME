@@ -1,0 +1,13 @@
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\obj\Debug\netcoreapp3.1\csAlgorithm.csprojAssemblyReference.cache
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\obj\Debug\netcoreapp3.1\csAlgorithm.AssemblyInfoInputs.cache
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\obj\Debug\netcoreapp3.1\csAlgorithm.AssemblyInfo.cs
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\obj\Debug\netcoreapp3.1\csAlgorithm.csproj.CoreCompileInputs.cache
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\bin\Debug\netcoreapp3.1\csAlgorithm.exe
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\bin\Debug\netcoreapp3.1\csAlgorithm.deps.json
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\bin\Debug\netcoreapp3.1\csAlgorithm.runtimeconfig.json
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\bin\Debug\netcoreapp3.1\csAlgorithm.runtimeconfig.dev.json
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\bin\Debug\netcoreapp3.1\csAlgorithm.dll
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\bin\Debug\netcoreapp3.1\csAlgorithm.pdb
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\obj\Debug\netcoreapp3.1\csAlgorithm.dll
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\obj\Debug\netcoreapp3.1\csAlgorithm.pdb
+C:\Users\dhtng\source\repos\csAlgorithm\csAlgorithm\obj\Debug\netcoreapp3.1\csAlgorithm.genruntimeconfig.cache
