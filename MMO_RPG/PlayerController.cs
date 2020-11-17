@@ -1,42 +1,47 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 /*
- * 벡터 - 위치, 방향
- * 방향 -> 이동시 사용 (a->b이동시, b에서 a를 뺀 값만큼 이동, vector-)
- * 방향벡터(거리(크기), 실제 방향(x, y, z)) -> vector 함수 사용
+ * prefab = 붕어빵틀 
+ * nested prefab = 붕어빵틀들을 합친 붕어빵틀 
+ * 
+ * 충돌 - collision(물리), Trigger(충돌 판단 확인)
+ * 
+ * Raycasting 
+ *  - 필요성(2d 화면 내에서 3d를 구현할 때 특정 객체를 선택할 수 있는가?)
+ *  - 카메라를 기준으로 2d 좌표를 누르면 레이저 쏘기 시작, collider에 닿으면 좌표 추출
+ *  - Physics.Raycast
+ *  - 물체가 플레이어를 막고 있을 때 레이저를 활용해 중간 물체가 인식되면 카메라 위치 변경 (물체보다 더 가까이)
+ * 
+ * 투영 
+ *  - local <-> world <-> viewport <-> screen(화면)
+ *  
  */
 public class PlayerController : MonoBehaviour
 {
-    [SerializeField] //public으로 하지 않아도 사용 가능
+    [SerializeField]
     float _speed = 10.0f;
-
 
     void Start()
     {
-        
+        Managers.Input.KeyAction -= OnKeyBoard; //다른 구독 시 해제하고 실행
+        Managers.Input.KeyAction += OnKeyBoard; //input매니저에게 키가 눌리면 함수 실행 지시
     }
-    //월드좌표(게임세상), 로컬좌표(캐릭터세상) -> 변환하며 사용 
-    float _yAngle = 0.0f;
+
     void Update()
     {
-        _yAngle += Time.deltaTime * _speed;
+       
 
-        //절대 회전값
-        //transform.eulerAngles = new Vector3(0.0f, _yAngle, 0.0f);
-
-        //+-delta -> 특정 축을 기준으로 회전
-        //transform.Rotate(new Vector3(0.0f, Time.deltaTime * _speed, 0.0f));
-
-        //transform.rotation = Quaternion.Euler(new Vector3(0.0f, _yAngle, 0.0f));
+    }
+    void OnKeyBoard()
+    {
 
         if (Input.GetKey(KeyCode.W)) //원하는 방향을 보며 이동(lookrotation), 블렌딩(slerp)
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(Vector3.forward), 0.2f);
             transform.position += Vector3.forward * Time.deltaTime * _speed;
         }
-       
+
         if (Input.GetKey(KeyCode.S))
         {
             transform.rotation = Quaternion.Slerp(transform.rotation, Quaternion.LookRotation(Vector3.back), 0.2f);
