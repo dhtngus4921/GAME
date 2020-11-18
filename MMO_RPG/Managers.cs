@@ -21,7 +21,7 @@ public class Managers : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-        _input.onUpdate(); //키보드 입력 체크
+        _input.OnUpdate(); //키보드 입력 체크
     }
 
     static void Init()
