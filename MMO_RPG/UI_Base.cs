@@ -7,7 +7,7 @@ using UnityEngine.UI;
 
 public abstract class UI_Base : MonoBehaviour
 {
-    Dictionary<Type, UnityEngine.Object[]> _object = new Dictionary<Type, UnityEngine.Object[]>();
+    protected Dictionary<Type, UnityEngine.Object[]> _objects = new Dictionary<Type, UnityEngine.Object[]>();
     //여러개 type이므로 dictionary로 관리
     
     public abstract void Init();
@@ -16,7 +16,7 @@ public abstract class UI_Base : MonoBehaviour
     {
         string[] names = Enum.GetNames(type);   //c#제공 enum값 string으로 뽑아오기
         UnityEngine.Object[] objects = new UnityEngine.Object[names.Length];
-        _object.Add(typeof(T), objects);
+        _objects.Add(typeof(T), objects);
 
         for (int i = 0; i < names.Length; i++)
         {
@@ -34,7 +34,7 @@ public abstract class UI_Base : MonoBehaviour
     protected T Get<T>(int idx) where T : UnityEngine.Object
     {
         UnityEngine.Object[] objects = null;
-        if (_object.TryGetValue(typeof(T), out objects) == false)
+        if (_objects.TryGetValue(typeof(T), out objects) == false)
             return null;
         return objects[idx] as T;
 
