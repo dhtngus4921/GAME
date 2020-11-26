@@ -8,7 +8,9 @@ using UnityEngine;
  */
 public class SoundManager
 {
-    AudioSource[] _audioSources = new AudioSource[(int)Define.Sound.MaxCount]; 
+    AudioSource[] _audioSources = new AudioSource[(int)Define.Sound.MaxCount];
+
+    Dictionary<string, AudioClip> _audioClips = new Dictionary<string, AudioClip>();
 
     public void Init()
     {
@@ -25,39 +27,70 @@ public class SoundManager
                 _audioSources[i] = go.AddComponent<AudioSource>();
                 go.transform.parent = root.transform; //root 밑에 저장
             }
-
             _audioSources[(int)Define.Sound.Bgm].loop = true; //무한으로 재생
         }
     }
 
-    public void Play(Define.Sound type, string path, float pitch = 1.0f)
+    public void Clear()
     {
-        if (path.Contains("Sounds/") == false)
-            path = $"Sounds/{path}";
-
-        if(type == Define.Sound.Bgm)
+        foreach(AudioSource audioSource in _audioSources)
         {
-            AudioClip audioClip = Managers.Resource.Load<AudioClip>(path);
-            if (audioClip == null)
-            {
-                Debug.Log($"audioClip missing! {path}");
-                return;
-            }
+            audioSource.clip = null;
+            audioSource.Stop();
+        }
+        _audioClips.Clear();
+    }
 
-            //TODO
+    public void Play(string path, Define.Sound type = Define.Sound.Effect, float pitch = 1.0f)
+    {
+        AudioClip audioClip = GetOrAddAudioClip(path, type);
+        Play(audioClip, type, pitch);
+    }
+
+    public void Play(AudioClip audioClip, Define.Sound type = Define.Sound.Effect, float pitch = 1.0f)
+    {
+        if (audioClip == null)
+            return;
+
+        if (type == Define.Sound.Bgm)
+        {
+            AudioSource audioSource = _audioSources[(int)Define.Sound.Bgm];
+            if (audioSource.isPlaying)
+                audioSource.Stop();
+
+            audioSource.pitch = pitch;
+            audioSource.clip = audioClip;
+            audioSource.Play();
         }
         else
         {
-            AudioClip audioClip = Managers.Resource.Load<AudioClip>(path);
-            if (audioClip == null)
-            {
-                Debug.Log($"audioClip missing! {path}");
-                return;
-            }
-
             AudioSource audioSource = _audioSources[(int)Define.Sound.Effect];
             audioSource.pitch = pitch;
             audioSource.PlayOneShot(audioClip);
         }
+    }
+
+    AudioClip GetOrAddAudioClip(string path, Define.Sound type = Define.Sound.Effect)
+    {
+        if (path.Contains("Sounds/") == false)
+            path = $"Sounds/{path}";
+
+        AudioClip audioClip = null;
+
+        if (type == Define.Sound.Bgm)
+            audioClip = Managers.Resource.Load<AudioClip>(path);
+        else
+        {
+            
+            if (_audioClips.TryGetValue(path, out audioClip) == false)
+            {
+                audioClip = Managers.Resource.Load<AudioClip>(path);
+                _audioClips.Add(path, audioClip);
+            }
+
+            if (audioClip == null)
+                Debug.Log($"audioClip missing! {path}");
+        }
+        return audioClip;
     }
 }
