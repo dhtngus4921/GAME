@@ -2,12 +2,14 @@
 using System.Collections.Generic;
 using System.Net.Sockets;
 using System.Text;
+using System.Threading;
 
 namespace ServerCore
 {
     class Session
     {
         Socket _socket;
+        int _disconnected = 0;
 
         public void Start(Socket socket)
         {
@@ -17,6 +19,8 @@ namespace ServerCore
 
             //clientSocket.Receive(recvBuff), 버퍼 연결하는 과정
             recvArgs.SetBuffer(new byte[1024], 0, 1024);
+
+            RegisterRecv(recvArgs);
         }
 
         void RegisterRecv(SocketAsyncEventArgs args)
@@ -28,6 +32,10 @@ namespace ServerCore
 
         public void Disconnect()
         {
+            //disconnect가 두번 사용되는 것을 방지, 1번 사용했을 때 1로 바꿔줌
+            if (Interlocked.Exchange(ref _disconnected, 1) == 1)
+                return;
+
             _socket.Shutdown(SocketShutdown.Both);
             _socket.Close();
         }
