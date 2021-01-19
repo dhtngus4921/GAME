@@ -4,17 +4,19 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
+//ServerCore를 라이브러리로 빼서 DummyClient에서 사용
 namespace ServerCore
 {
-    class Listener
+    public class Listener
     {
         Socket _listenSocket;
-        Action<Socket> _onAcceptHandler;
+        //new로 생성하지 않고 _sessionFactory.Invoke()
+        Func<Session> _sessionFactory;
 
-        public void Init(IPEndPoint endPoint, Action<Socket> onAcceptHandler)
+        public void Init(IPEndPoint endPoint, Func<Session> sessionFactory)
         {
             _listenSocket = new Socket(endPoint.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
-            _onAcceptHandler = onAcceptHandler;
+            _sessionFactory += sessionFactory;
 
             _listenSocket.Bind(endPoint);
 
@@ -44,9 +46,9 @@ namespace ServerCore
         {
             if(args.SocketError == SocketError.Success)
             {
-                //소켓이 에러 없이 잘 실행된 상태
-                //Socket clientSocket = _listener.Accept() 와 같은 역할
-                _onAcceptHandler.Invoke(args.AcceptSocket);
+                Session session = _sessionFactory.Invoke();
+                session.Start(args.AcceptSocket);
+                session.OnConnected(args.AcceptSocket.RemoteEndPoint);
             }else
                 Console.WriteLine(args.SocketError.ToString());
 
