@@ -7,6 +7,40 @@ using System.Threading;
 
 namespace ServerCore
 {
+    //패킷을 사용하는 session을 구분해서 만든다.
+    public abstract class PacketSession : Session
+    {
+        public static readonly int HeaderSize = 2;
+        //다른 클래스에서 packetsession을 상속받아 onrecv를 override하면 오류 발생 / 봉인
+        //packetsession을 상속받는 클래스는 별도의 함수(onrecvpacket)를 통해 받아야 함
+        public sealed override int OnRecv(ArraySegment<byte> buffer)
+        {
+            int processLen = 0;
+
+            while (true)
+            {
+                //최소한 헤더는 파싱할 수 있는지 확인
+                if (buffer.Count < HeaderSize)
+                    break;
+
+                //패킷이 완전체로 도착했는지, 잘리지 않았는지 확인
+                ushort dataSize = (ushort)BitConverter.ToUInt16(buffer.Array, buffer.Offset);
+                if (buffer.Count < dataSize)
+                    break;
+
+                //여기까지 왔으면 패킷 조립 가능 , 패킷이 해당하는 부분을 명시해줌
+                OnRecvPacket(new ArraySegment<byte>(buffer.Array, buffer.Offset, dataSize));
+
+                processLen += dataSize;
+                buffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + dataSize, buffer.Count - dataSize);
+            }
+
+            return processLen;
+        }
+
+        public abstract void OnRecvPacket(ArraySegment<byte> buffer);
+    }
+
     public abstract class Session
     {
         Socket _socket;
@@ -16,10 +50,8 @@ namespace ServerCore
 
         object _lock = new object();
         //_pending: registerSend시 true로 변환, 전송하고 있음을 알려주는 역할, onsendCompleted호출 시 _pending을 다시 false로(전송 완료)
-        Queue<byte[]> _sendQueue = new Queue<byte[]>();
-
+        Queue<ArraySegment<byte>> _sendQueue = new Queue<ArraySegment<byte>>();
         List<ArraySegment<byte>> _pendingList = new List<ArraySegment<byte>>();
-
         SocketAsyncEventArgs _sendArgs = new SocketAsyncEventArgs();
         SocketAsyncEventArgs _recvArgs = new SocketAsyncEventArgs();
 
@@ -40,7 +72,7 @@ namespace ServerCore
         }
 
         //원하는 시점에 호출하여 사용하는 것이기 때문에 까다로움
-        public void Send(byte[] sendBuff)
+        public void Send(ArraySegment<byte> sendBuff)
         {
             lock (_lock)
             {
@@ -68,10 +100,10 @@ namespace ServerCore
             //sendQueue.count, pending과 같은 역할
             while(_sendQueue.Count > 0)
             {
-                byte[] buff = _sendQueue.Dequeue();
+                ArraySegment<byte> buff = _sendQueue.Dequeue();
                 //큐의 내용을 받아 새로 받은 버퍼로 set
                 //_sendArgs.BufferList.Add(new ArraySegment<byte>(buff, 0, buff.Length)); -> 오류 나는 방식, list 만들어서 처리
-                _pendingList.Add(new ArraySegment<byte>(buff, 0, buff.Length));
+                _pendingList.Add(buff);
             }
             _sendArgs.BufferList = _pendingList;
 

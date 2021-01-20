@@ -49,20 +49,12 @@ namespace ServerCore
                 Session session = _sessionFactory.Invoke();
                 session.Start(args.AcceptSocket);
                 session.OnConnected(args.AcceptSocket.RemoteEndPoint);
-            }else
+            }
+            else
                 Console.WriteLine(args.SocketError.ToString());
 
             //작업 완료 후 다음 소켓을 위해 등록
             RegisterAccept(args);
-        }
-
-        public Socket Accept()
-        {
-            //Async: 비동기, 동시에 처리되지 않고 나중에 처리 될 수 있음, nonblocking
-            _listenSocket.AcceptAsync();
-
-            //blocking 계열 함수 사용, 게임x
-            return _listenSocket.Accept();
         }
     }
 }

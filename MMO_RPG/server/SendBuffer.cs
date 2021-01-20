@@ -7,6 +7,7 @@ namespace ServerCore
 {
     public class SendBufferHelper
     {
+        //다른 환경에서 접근할 수 없는 local thread
         public static ThreadLocal<SendBuffer> CurrentBuffer = new ThreadLocal<SendBuffer>(() => { return null; });
 
         //chunksize -> 뭉탱이, sendbuffer의 사이즈는 크니까
