@@ -3,7 +3,7 @@
   <packet name ="PlayerInfoReq">
     <long name="playerId"/>
     <string name ="name"/>
-    <list name ="list">
+    <list name ="skill">
       <int name ="id"/>
       <short name ="level"/>
       <float name ="duration"/>

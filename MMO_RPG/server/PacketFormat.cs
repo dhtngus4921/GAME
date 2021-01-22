@@ -37,7 +37,7 @@ class {0}
         Span<byte> s = new Span<byte>(segment.Array, segment.Offset, segment.Count);
 
         count += sizeof(ushort);
-        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), (ushort)PacketID.{0};);
+        success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), (ushort)PacketID.{0});
         count += sizeof(ushort);
         {3}
         success &= BitConverter.TryWriteBytes(s, count);
@@ -77,7 +77,7 @@ public struct {0}
         return success;
     }}
 }}
-public List<{0}> {1} = new List<{0}>();";
+public List<{0}> {1}s = new List<{0}>();";
 
         //{0} 변수 이름
         //{1} To~ 변수 형식
