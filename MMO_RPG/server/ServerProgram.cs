@@ -21,6 +21,8 @@ namespace Server
         //달라진점. 어떤 세션을 만들것인지만 정의해주고 나머지는 내부에서 처리, 프로그램 보안성 향상   
         static void Main(string[] args)
         {
+            PacketManager.Instance.Register();
+
             string host = Dns.GetHostName();
             IPHostEntry ipHost = Dns.GetHostEntry(host);
             IPAddress ipAddr = ipHost.AddressList[0];

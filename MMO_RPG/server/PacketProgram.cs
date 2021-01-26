@@ -7,17 +7,26 @@ namespace PacketGenerator
     class PacketProgram
     {
         static string genPackets;
+        static ushort packetId;
+        static string pakcetEnums;
+
+        static string managerRegister;
 
         static void Main(string[] args)
         {
+            string pdlPath = "../PDL.xml";
+
             XmlReaderSettings settings = new XmlReaderSettings()
             {
                 IgnoreComments = true,
                 IgnoreWhitespace = true
             };
 
+            if (args.Length >= 1)
+                pdlPath = args[0];
+
             //using 범위에서 벗어나면 dispose
-            using (XmlReader r = XmlReader.Create("PDL.xml", settings))
+            using (XmlReader r = XmlReader.Create(pdlPath, settings))
             {
                 r.MoveToContent();
                 
@@ -28,7 +37,11 @@ namespace PacketGenerator
                     //Console.WriteLine(r.Name + " " + r["name"]);
                 }
             }
-            File.WriteAllText("GenPackets.cs", genPackets);
+
+            string fileText = string.Format(PacketFormat.fileFormat, pakcetEnums, genPackets);
+            File.WriteAllText("GenPackets.cs", fileText);
+            string managerText = string.Format(PacketFormat.managerFormat, managerRegister);
+            File.WriteAllText("PacketManager.cs", managerText);
         }
 
         public static void ParsePacket(XmlReader r)
@@ -53,6 +66,8 @@ namespace PacketGenerator
             //클래스 PacketFormat.packetFormat의 멤버변수를 만들어서 넣어줌 {0}{1}{2}{3}
             //parsing format에 오류가 있을 경우 데이터가 들어오지 않음 {{ }} -> 괄호 문제
             genPackets += string.Format(PacketFormat.packetFormat, packetName, t.Item1, t.Item2, t.Item3);
+            pakcetEnums += string.Format(PacketFormat.packetEnumFormat, packetName, ++packetId) + Environment.NewLine + "\t";
+            managerRegister += string.Format(PacketFormat.managerRegisterFormat, packetName) + Environment.NewLine;
         }
 
         //{1} 멤버 변수
@@ -89,6 +104,12 @@ namespace PacketGenerator
                 string memberType = r.Name.ToLower();
                 switch (memberType)
                 {
+                    case "byte":
+                    case "sbyte":
+                        memberCode += string.Format(PacketFormat.memberFormat, memberType, memberName);
+                        readCode += string.Format(PacketFormat.readByteFormat, memberName, memberType);
+                        writeCode += string.Format(PacketFormat.writeByteFormat, memberName, memberType);
+                        break;
                     case "bool":
                     case "short":
                     case "ushort":
@@ -122,9 +143,10 @@ namespace PacketGenerator
             return new Tuple<string, string, string>(memberCode, readCode, writeCode);
         }
 
+        //XmlReader r -> xml 파일에서 설정한 변수를 뽑아오는 과정
         public static Tuple<string, string, string> ParseList(XmlReader r)
         {
-            //r["name"] = skill이 들어와야 함, 왜 list가 들어오지 ?
+            //r["name"] = skill이 들어와야 함, 왜 list가 들어오지? -> PDL에서 이름을 잘못 설정한 경우였음
             string listName = r["name"];
             if (string.IsNullOrEmpty(listName))
             {
