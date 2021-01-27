@@ -10,7 +10,8 @@ namespace PacketGenerator
         static ushort packetId;
         static string pakcetEnums;
 
-        static string managerRegister;
+        static string serverRegister;
+        static string clientRegister;
 
         static void Main(string[] args)
         {
@@ -40,8 +41,10 @@ namespace PacketGenerator
 
             string fileText = string.Format(PacketFormat.fileFormat, pakcetEnums, genPackets);
             File.WriteAllText("GenPackets.cs", fileText);
-            string managerText = string.Format(PacketFormat.managerFormat, managerRegister);
-            File.WriteAllText("PacketManager.cs", managerText);
+            string clientManagerText = string.Format(PacketFormat.managerFormat, clientRegister);
+            File.WriteAllText("ClientPacketManager.cs", clientManagerText);
+            string serverManagerText = string.Format(PacketFormat.managerFormat, serverRegister);
+            File.WriteAllText("ServerPacketManager.cs", serverManagerText);
         }
 
         public static void ParsePacket(XmlReader r)
@@ -67,7 +70,11 @@ namespace PacketGenerator
             //parsing format에 오류가 있을 경우 데이터가 들어오지 않음 {{ }} -> 괄호 문제
             genPackets += string.Format(PacketFormat.packetFormat, packetName, t.Item1, t.Item2, t.Item3);
             pakcetEnums += string.Format(PacketFormat.packetEnumFormat, packetName, ++packetId) + Environment.NewLine + "\t";
-            managerRegister += string.Format(PacketFormat.managerRegisterFormat, packetName) + Environment.NewLine;
+            //매니저 사용을 없애고 server와 client로 나눠서 코딩
+            if(packetName.StartsWith("S_")|| packetName.StartsWith("s_"))
+                clientRegister += string.Format(PacketFormat.managerRegisterFormat, packetName) + Environment.NewLine;
+            else
+                serverRegister += string.Format(PacketFormat.managerRegisterFormat, packetName) + Environment.NewLine;
         }
 
         //{1} 멤버 변수

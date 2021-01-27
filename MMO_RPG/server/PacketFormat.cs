@@ -148,11 +148,9 @@ class {0} : IPacket
         //{4} 멤버 변수 write
         public static string memberListFormat =
 @"
-public struct {0}
+public class {0}
 {{
-    public int id;
-    public short level;
-    public float duration;
+    {2}
 
     public void Read(ReadOnlySpan<byte> s, ref ushort count)
     {{
@@ -209,7 +207,7 @@ count += sizeof({1});";
         //{0} 변수 이름
         //{1} 변수 형식
         public static string writeByteFormat =
-@"segment.Array[segment.Offset + count] = this.{0};
+@"segment.Array[segment.Offset + count] = (byte)this.{0};
 count += sizeof({1});";
 
         //{0} 변수 이름
@@ -222,11 +220,9 @@ count += {0}Len;";
         //{0} 리스트 이름 [대문자]
         //{1} 리스트 이름 [소문자]
         public static string writeListFormat =
-@"
-success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), (ushort)this.{1}s.Count);
+@"success &= BitConverter.TryWriteBytes(s.Slice(count, s.Length - count), (ushort)this.{1}s.Count);
 count += sizeof(ushort);
 foreach ({0} {1} in this.{1}s)
-    success &= {1}.Write(s, ref count);
-";
+    success &= {1}.Write(s, ref count);";
     }
 }

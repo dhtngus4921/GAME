@@ -17,6 +17,7 @@ namespace Server
     class ServerProgram
     {
         static Listener _listener = new Listener();
+        public static GameRoom Room = new GameRoom();
 
         //달라진점. 어떤 세션을 만들것인지만 정의해주고 나머지는 내부에서 처리, 프로그램 보안성 향상   
         static void Main(string[] args)
@@ -29,7 +30,7 @@ namespace Server
             IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
 
             //gameSession을 만들기로 정의
-            _listener.Init(endPoint, () => { return new ClientSession(); });
+            _listener.Init(endPoint, () => { return SessionManager.Instance.Generate(); });
             Console.WriteLine("Listening...");
 
             while (true)
