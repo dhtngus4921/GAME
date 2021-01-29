@@ -16,6 +16,7 @@ namespace ServerCore
         public sealed override int OnRecv(ArraySegment<byte> buffer)
         {
             int processLen = 0;
+            int packetCount = 0;
 
             while (true)
             {
@@ -24,16 +25,20 @@ namespace ServerCore
                     break;
 
                 //패킷이 완전체로 도착했는지, 잘리지 않았는지 확인
-                ushort dataSize = (ushort)BitConverter.ToUInt16(buffer.Array, buffer.Offset);
+                ushort dataSize = BitConverter.ToUInt16(buffer.Array, buffer.Offset);
                 if (buffer.Count < dataSize)
                     break;
 
                 //여기까지 왔으면 패킷 조립 가능 , 패킷이 해당하는 부분을 명시해줌
                 OnRecvPacket(new ArraySegment<byte>(buffer.Array, buffer.Offset, dataSize));
+                packetCount++;
 
                 processLen += dataSize;
                 buffer = new ArraySegment<byte>(buffer.Array, buffer.Offset + dataSize, buffer.Count - dataSize);
             }
+
+            if(packetCount >1)
+                Console.WriteLine($"패킷 모아보내기 : {packetCount}");
 
             return processLen;
         }
@@ -81,51 +86,55 @@ namespace ServerCore
         }
 
         //원하는 시점에 호출하여 사용하는 것이기 때문에 까다로움
+        public void Send(List<ArraySegment<byte>> sendBuffList)
+        {
+            if (sendBuffList.Count == 0)
+                return;
+            lock (_lock)
+            {
+                foreach (ArraySegment<byte> sendBuff in sendBuffList)
+                    _sendQueue.Enqueue(sendBuff);
+
+                 if (_pendingList.Count == 0)
+                    RegisterSend();
+            }
+        }
+
         public void Send(ArraySegment<byte> sendBuff)
         {
             lock (_lock)
             {
                 _sendQueue.Enqueue(sendBuff);
-                //지금 바로 전송 가능한 상태, multithread에서 실행하는 경우 lock의 개념이 추가되어야 함.
                 if (_pendingList.Count == 0)
                     RegisterSend();
             }
         }
 
-        void RegisterRecv()
+        public void Disconnect()
         {
-            if (_disconnected == 1)
+            //disconnect가 두번 사용되는 것을 방지, 1번 사용했을 때 1로 바꿔줌
+            if (Interlocked.Exchange(ref _disconnected, 1) == 1)
                 return;
 
-            _recvBuffer.Clean();
-            ArraySegment<byte> segment = _recvBuffer.WriteSegment;
-            //offset부터 count까지를 빈공간이라고 알려줌
-            _recvArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
-
-            try
-            {
-                bool pending = _socket.ReceiveAsync(_recvArgs);
-                if (pending == false)
-                    OnRecvCompleted(null, _recvArgs);
-            }
-            catch(Exception e)
-            {
-                Console.WriteLine($"RegisterRecv Failed {e}");
-            }
+            //disconnect시 gamesession에서 처리하고자 하는 작업을 처리 하기 위함
+            OnDisconnected(_socket.RemoteEndPoint);
+            _socket.Shutdown(SocketShutdown.Both);
+            _socket.Close();
+            Clear();
         }
+
+
+        #region 네트워크 통신
 
         void RegisterSend()
         {
             if (_disconnected == 1)
                 return;
 
-            //sendQueue.count, pending과 같은 역할
-            while(_sendQueue.Count > 0)
+            while (_sendQueue.Count > 0)
             {
                 ArraySegment<byte> buff = _sendQueue.Dequeue();
-                //큐의 내용을 받아 새로 받은 버퍼로 set
-                //_sendArgs.BufferList.Add(new ArraySegment<byte>(buff, 0, buff.Length)); -> 오류 나는 방식, list 만들어서 처리
-                _pendingList.Add(buff);
+               _pendingList.Add(buff);
             }
             _sendArgs.BufferList = _pendingList;
 
@@ -135,59 +144,11 @@ namespace ServerCore
                 if (pending == false)
                     OnSendCompleted(null, _sendArgs);
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Console.WriteLine($"RegisterSend Failed {e}");
             }
-
         }
-
-        //내부에서만 사용하는 부분이므로 region으로 감싸줌
-        #region 네트워크 통신
-        //서버에서 클라이언트의 데이터를 받아오는 부분
-        void OnRecvCompleted(object sender, SocketAsyncEventArgs args)
-        {
-            //성공적으로 통신을 끝낸 경우
-            if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
-            {
-                try
-                {
-                    //빈 공간을 확인하고 그 부분으로 커서 이동, bytetransffered로 이동
-                    if(_recvBuffer.OnWrite(args.BytesTransferred) == false)
-                    {
-                        //버그 확인 disconnect()
-                        Disconnect();
-                        return;
-                    }
-
-                    //컨텐츠 쪽으로 데이터를 넘겨주고 얼마나 처리했는지 받는다.
-                    int processLen = OnRecv(_recvBuffer.ReadSegment);
-                    if(processLen < 0 || _recvBuffer.DataSize < processLen)
-                    {
-                        Disconnect();
-                        return;
-                    }
-
-                    //처리 한 readPos 이동
-                    if(_recvBuffer.OnRead(processLen) == false)
-                    {
-                        Disconnect();
-                        return;
-                    }
-
-                    RegisterRecv();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine($"OnRecvCompleted Failed {e}");
-                }
-            }
-            else
-            {
-                Disconnect();
-            }
-        }
-        #endregion
 
         void OnSendCompleted(object sender, SocketAsyncEventArgs args)
         {
@@ -219,17 +180,68 @@ namespace ServerCore
             }
         }
 
-        public void Disconnect()
+        void RegisterRecv()
         {
-            //disconnect가 두번 사용되는 것을 방지, 1번 사용했을 때 1로 바꿔줌
-            if (Interlocked.Exchange(ref _disconnected, 1) == 1)
+            if (_disconnected == 1)
                 return;
 
-            //disconnect시 gamesession에서 처리하고자 하는 작업을 처리 하기 위함
-            OnDisconnected(_socket.RemoteEndPoint);
-            _socket.Shutdown(SocketShutdown.Both);
-            _socket.Close();
-            Clear();
+            _recvBuffer.Clean();
+            ArraySegment<byte> segment = _recvBuffer.WriteSegment;
+            //offset부터 count까지를 빈공간이라고 알려줌
+            _recvArgs.SetBuffer(segment.Array, segment.Offset, segment.Count);
+
+            try
+            {
+                bool pending = _socket.ReceiveAsync(_recvArgs);
+                if (pending == false)
+                    OnRecvCompleted(null, _recvArgs);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"RegisterRecv Failed {e}");
+            }
         }
+
+        void OnRecvCompleted(object sender, SocketAsyncEventArgs args)
+        {
+            if (args.BytesTransferred > 0 && args.SocketError == SocketError.Success)
+            {
+                try
+                {
+                    if(_recvBuffer.OnWrite(args.BytesTransferred) == false)
+                    {
+                        Disconnect();
+                        return;
+                    }
+
+                    int processLen = OnRecv(_recvBuffer.ReadSegment);
+                    if(processLen < 0 || _recvBuffer.DataSize < processLen)
+                    {
+                        Disconnect();
+                        return;
+                    }
+
+                    //처리 한 readPos 이동
+                    if(_recvBuffer.OnRead(processLen) == false)
+                    {
+                        Disconnect();
+                        return;
+                    }
+
+                    RegisterRecv();
+                }
+                catch (Exception e)
+                {
+                    Console.WriteLine($"OnRecvCompleted Failed {e}");
+                }
+            }
+            else
+            {
+                Disconnect();
+            }
+        }
+        #endregion
+
+        
     }
 }
