@@ -1,47 +1,50 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Net;
-using System.Net.Sockets;
 using System.Text;
+using System.Net.Sockets;
 using System.Threading;
+using System.Threading.Tasks;
 using ServerCore;
+using System.Net;
 
 namespace Server
 {
-    class ClientSession : PacketSession
-    {
-        public int SessionId { get; set; }
-        public GameRoom Room { get; set; }
+	class ClientSession : PacketSession
+	{
+		public int SessionId { get; set; }
+		public GameRoom Room { get; set; }
+		public float PosX { get; set; }
+		public float PosY { get; set; }
+		public float PosZ { get; set; }
 
-        public override void OnConnected(EndPoint endPoint)
-        {
-            Console.WriteLine($"OnConnected : {endPoint}");
+		public override void OnConnected(EndPoint endPoint)
+		{
+			Console.WriteLine($"OnConnected : {endPoint}");
 
-            ServerProgram.Room.Push(() => ServerProgram.Room.Enter(this));
-        }
+			Program.Room.Push(() => Program.Room.Enter(this));
+		}
 
-        public override void OnRecvPacket(ArraySegment<byte> buffer)
-        {
-            //singleton 바로 호출
-            PacketManager.Instance.OnRecvPacket(this, buffer);
-        }
+		public override void OnRecvPacket(ArraySegment<byte> buffer)
+		{
+			PacketManager.Instance.OnRecvPacket(this, buffer);
+		}
 
-        public override void OnDisconnected(EndPoint endPoint)
-        {
-            SessionManager.Instance.Remove(this);
-            if(Room != null)
-            {
-                GameRoom room = Room;
-                room.Push(() => room.Leave(this));
-                Room = null;
-            }
+		public override void OnDisconnected(EndPoint endPoint)
+		{
+			SessionManager.Instance.Remove(this);
+			if (Room != null)
+			{
+				GameRoom room = Room;
+				room.Push(() => room.Leave(this));
+				Room = null;
+			}
 
-            Console.WriteLine($"OnDisconnected bytes: {endPoint}");
-        }
+			Console.WriteLine($"OnDisconnected : {endPoint}");
+		}
 
-        public override void OnSend(int numOfBuffer)
-        {
-            //Console.WriteLine($"Transferred bytes: {numOfBuffer}");
-        }
-    }
+		public override void OnSend(int numOfBytes)
+		{
+			//Console.WriteLine($"Transferred bytes: {numOfBytes}");
+		}
+	}
 }
