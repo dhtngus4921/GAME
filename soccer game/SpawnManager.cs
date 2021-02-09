@@ -58,7 +58,9 @@ public class SpawnManager : MonoBehaviour
             player.transform.position = new Vector3(0, 0, 0);
             //player 다시 스폰 되었을때 input값도 초기화 
             //일정 시간 지난 후 enemy와 player 움직이도록 -> game reset
+            //게임 끝난 후 시간 delay
 
+            
             heart--;
         }
 
