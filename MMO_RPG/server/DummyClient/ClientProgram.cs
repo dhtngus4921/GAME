@@ -9,32 +9,33 @@ namespace DummyClient
 {
     class ClientProgram
     {
-        static void Main(string[] args)
-        {
-            string host = Dns.GetHostName();
-            IPHostEntry ipHost = Dns.GetHostEntry(host);
-            IPAddress ipAddr = ipHost.AddressList[0];
-            IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
+		static void Main(string[] args)
+		{
+			// DNS (Domain Name System)
+			string host = Dns.GetHostName();
+			IPHostEntry ipHost = Dns.GetHostEntry(host);
+			IPAddress ipAddr = ipHost.AddressList[0];
+			IPEndPoint endPoint = new IPEndPoint(ipAddr, 7777);
 
-            Connector connector = new Connector();
+			Connector connector = new Connector();
 
-            connector.Connect(endPoint, 
-                () => { return SessionManager.Instance.Generate(); },
-                10);
+			connector.Connect(endPoint,
+				() => { return SessionManager.Instance.Generate(); },
+				500);
 
-            while (true)
-            {
-                try
-                {
-                    SessionManager.Instance.SendForEach();
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.ToString());
-                }
+			while (true)
+			{
+				try
+				{
+					SessionManager.Instance.SendForEach();
+				}
+				catch (Exception e)
+				{
+					Console.WriteLine(e.ToString());
+				}
 
-                Thread.Sleep(250);
-            }
-        }
-    }
+				Thread.Sleep(250);
+			}
+		}
+	}
 }
