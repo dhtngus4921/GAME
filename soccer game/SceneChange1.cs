@@ -3,15 +3,15 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
-public class SceneChange : MonoBehaviour
+public class SceneChange1 : MonoBehaviour
 {
     public void ChangeFirstScene()
     {
-        SceneManager.LoadScene("StartScene");
+        SceneManager.LoadScene("Prototype 4");
     }
 
     public void ChangeSecondScene()
     {
-        SceneManager.LoadScene("Prototype 4");
+        SceneManager.LoadScene("GameOver");
     }
 }

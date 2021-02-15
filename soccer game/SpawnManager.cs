@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 public class SpawnManager : MonoBehaviour
 {
@@ -60,14 +61,16 @@ public class SpawnManager : MonoBehaviour
             //일정 시간 지난 후 enemy와 player 움직이도록 -> game reset
             //게임 끝난 후 시간 delay
 
-            
+            enemyCount--;
+            waveNumber--;
             heart--;
         }
 
         if(heart == 0)
         {
             System.Console.WriteLine("Game over!");
-            UnityEditor.EditorApplication.isPlaying = false;
+            SceneManager.LoadScene("GameOver");
+            //UnityEditor.EditorApplication.isPlaying = false;
         }
     }
 }
